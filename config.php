@@ -1,20 +1,14 @@
-﻿<?php
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-$host = getenv('MYSQL_ADDON_HOST');
-$db   = getenv('MYSQL_ADDON_DB');
-$user = getenv('MYSQL_ADDON_USER');
-$pass = getenv('MYSQL_ADDON_PASSWORD');
-$port = getenv('MYSQL_ADDON_PORT');
-try {
-  $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4";
-  $pdo = new PDO($dsn, $user, $pass);
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch(Exception $e){
-  http_response_code(500);
-  echo json_encode(['success'=>false, 'message'=>'DB Error: '.$e->getMessage()]);
-  exit;
+<?php
+// config.php
+define('DB_SERVER', '://clever-cloud.com'); // الخادم الظاهر في الصورة
+define('DB_USERNAME', 'uzo6fvba8w5bhwln'); // المستخدم الظاهر في الصورة
+define('DB_PASSWORD', 'ضع_كلمة_السر_الخاصة_بالقاعدة_هنا'); // كلمة السر المستخرجة من السيرفر
+define('DB_NAME', 'bw4jlsdfrulsmwystuqp'); // اسم قاعدة البيانات المكتوب فوق phpMyAdmin
+define('DB_PORT', '3306'); // المنفذ القياسي للـ MySQL
+
+$link = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME, DB_PORT);
+
+if($link === false){
+    die("ERROR: Could not connect. " . mysqli_connect_error());
 }
 ?>
