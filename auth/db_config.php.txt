@@ -1,0 +1,19 @@
+<?php
+// db_config.php
+
+$host = "://clever-cloud.com";
+$db   = "bd9exha0bee6skkaeldx";
+$user = "uzt0rkqh1agmdiqe";
+$pass = "rnroTJnJkYhMUF3LTMnz";
+$port = "3306";
+
+// إنشاء الاتصال المؤمن بالسيرفر السحابي الجديد
+$conn = new mysqli($host, $user, $pass, $db, $port);
+
+if ($conn->connect_error) {
+    die(json_encode(["status" => "error", "message" => "فشل الاتصال بخادم قاعدة البيانات السحابية"]));
+}
+
+// ضبط الترميز الصارم لدعم اللغة العربية في الأسماء والأقسام الـ 20
+$conn->set_charset("utf8mb4");
+?>

@@ -1,0 +1,77 @@
+<?php
+// login.php
+
+// السماح بمرور البيانات لجميع الهواتف والموبايلات دون مشاكل اتصال (CORS)
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
+
+// استدعاء ملف الإعدادات الجديد المتواجد على سطح المكتب
+include "db_config.php";
+
+// استقبال البيانات سواء قادمة عبر FormData أو حزمة JSON من تطبيق فلاتر
+$phone    = $_POST['phone_number'] ?? '';
+$password = $_POST['password'] ?? '';
+
+if (empty($phone) || empty($password)) {
+    // محاولة القراءة في حال إرسال البيانات كـ JSON
+    $json = json_decode(file_get_contents("php://input"), true);
+    $phone    = $json['phone_number'] ?? '';
+    $password = $json['password'] ?? '';
+}
+
+if (empty($phone) || empty($password)) {
+    echo json_encode(["status" => "fail", "message" => "يرجى إدخال رقم الهاتف وكلمة المرور بالكامل"]);
+    exit();
+}
+
+// الاستعلام الآمن باستخدام Prepared Statements لمنع ثغرات الاختراق وحقن الـ SQL
+$stmt = $conn->prepare("SELECT user_id, full_name, password_hash, account_type, is_active, national_id_expiry_date FROM users WHERE phone_number = ? LIMIT 1");
+$stmt->bind_param("s", $phone);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $user = $result->fetch_assoc();
+    
+    // مطابقة كلمة المرور المدخلة مع الهاش المشفر المخزن في الداتابيز لحماية خصوصية العملاء والركاب
+    if (password_verify($password, $user['password_hash']) || $password === $user['password_hash']) {
+        
+        // فحص الامتثال الأمني وتواريخ انتهاء الوثائق (الحظر التلقائي التراكمي للمستندات)
+        $shouldForceUpdate = false;
+        if (!empty($user['national_id_expiry_date'])) {
+            $expiry = new DateTime($user['national_id_expiry_date']);
+            $today  = new DateTime();
+            $diff   = $today->diff($expiry);
+            $daysRemaining = (int)$expiry->diff($today)->format("%r%a");
+            
+            // إذا متبقي يومين أو أقل على انتهاء صلاحية المستند، يتم حظر الحساب فوراً لتحويله لصفحة التحديث
+            if ($daysRemaining <= 2) {
+                $shouldForceUpdate = true;
+                $conn->query("UPDATE users SET is_active = 0 WHERE user_id = " . $user['user_id']);
+                $user['is_active'] = 0;
+            }
+        }
+
+        echo json_encode([
+            "status" => "success",
+            "message" => "تم تسجيل الدخول بنجاح والاتصال بالسيرفر الجديد",
+            "user_data" => [
+                "user_id" => (int)$user['user_id'],
+                "full_name" => $user['full_name'],
+                "account_type" => $user['account_type'],
+                "is_active" => (int)$user['is_active'] === 1 ? true : false,
+                "should_force_update" => $shouldForceUpdate
+            ]
+        ]);
+    } else {
+        echo json_encode(["status" => "fail", "message" => "كلمة المرور التي أدخلتها غير صحيحة"]);
+    }
+} else {
+    echo json_encode(["status" => "fail", "message" => "رقم الهاتف هذا غير مسجل بنظام الفانوس السحري"]);
+}
+
+$stmt->close();
+$conn->close();
+?>
