@@ -9,17 +9,14 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # السطر ده هو الحل الجذري اللي هيجبر الأداة تدخل جوة مجلد مشروعك فوراً وتلغي خطأ الـ root
-          project-src: 'magic_lantern'
           
+      # تشغيل جلب مكتبات قاعدة البيانات والمحافظ مباشرة في المجلد الرئيسي المستقر
       - run: flutter pub get
-        working-directory: magic_lantern
         
+      # بناء ملف الـ APK النهائي الصافي 100% بدون تعليق لجهازك
       - run: flutter build apk --release
-        working-directory: magic_lantern
         
       - uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: magic_lantern/build/app/outputs/flutter-apk/app-release.apk
-          
+          path: build/app/outputs/flutter-apk/app-release.apk
