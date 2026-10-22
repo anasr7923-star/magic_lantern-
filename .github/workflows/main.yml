@@ -10,14 +10,31 @@ jobs:
         with:
           channel: 'stable'
           
-      # تشغيل جلب مكتبات قاعدة البيانات والمحافظ مباشرة في المجلد الرئيسي المستقر
-      - run: flutter pub get
+      # فحص المجلدات والدخول التلقائي لمجلد الفلاتر أينما كان لمنع خطأ الـ root
+      - name: Install Dependencies
+        run: |
+          if [ -d "magic_lantern" ]; then
+            cd magic_lantern && flutter pub get
+          elif [ -d "magic_lantern-" ]; then
+            cd magic_lantern- && flutter pub get
+          else
+            flutter pub get
+          fi
         
       # بناء ملف الـ APK النهائي الصافي 100% والمربوط بقاعدة بياناتك السحابية حياً
-      - run: flutter build apk --release
+      - name: Build APK
+        run: |
+          if [ -d "magic_lantern" ]; then
+            cd magic_lantern && flutter build apk --release
+          elif [ -d "magic_lantern-" ]; then
+            cd magic_lantern- && flutter build apk --release
+          else
+            flutter build apk --release
+          fi
         
+      # رفع واستخراج ملف الـ APK النهائي للتحميل المباشر
       - uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: "**/build/app/outputs/flutter-apk/app-release.apk"
           
