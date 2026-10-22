@@ -5,12 +5,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          
+      # الدخول للمجلد الصحيح وتشغيل جلب المكتبات (تراكمي مصلح)
       - run: flutter pub get
+        working-directory: magic_lantern
+        
+      # بناء ملف الـ APK النهائي من داخل مجلد المشروع الصحيح
       - run: flutter build apk --release
+        working-directory: magic_lantern
+        
       - uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: magic_lantern/build/app/outputs/flutter-apk/app-release.apk
