@@ -10,13 +10,17 @@ jobs:
         with:
           channel: 'stable'
           
-      # تشغيل جلب مكتبات قاعدة البيانات والمحافظ مباشرة في المجلد الرئيسي المستقر
+      # الدخول للمسار الثلاثي الصحيح والمطابق لمستودعك حياً لتنزيل الحزم
       - run: flutter pub get
+        working-directory: magic_lantern-/magic_lantern
         
-      # بناء ملف الـ APK النهائي الصافي 100% بدون تعليق لجهازك
-      - run: flutter build apk --release
+      # بناء ملف الـ APK النهائي المكتمل بـ 0 أخطاء من داخل المجلد الفعلي
+      - run: flutter build apk --release -t lib/main.dart
+        working-directory: magic_lantern-/magic_lantern
         
+      # رفع واستخراج ملف الـ APK النهائي للتحميل المباشر من المتصفح
       - uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: magic_lantern-/magic_lantern/build/app/outputs/flutter-apk/app-release.apk
+          
