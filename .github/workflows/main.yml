@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. جلب الكود
+      # 1. جلب الكود الخاص بالمشروع
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. إعداد بيئة جافا
+      # 2. إعداد بيئة جافا لبناء الأندرويد
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -27,20 +27,27 @@ jobs:
         with:
           channel: 'stable'
 
-      # 4. جلب المكتبات من داخل مجلد المشروع الفرعي
-      - name: Install dependencies
-        run: flutter pub get
-        working-directory: magic_lantern
+      # 4. جلب المكتبات والبناء التلقائي من داخل مجلد فلاتر أينما كان موقعه
+      - name: Install dependencies & Build APK
+        run: |
+          # البحث التلقائي عن المجلد الذي يحتوي على ملف مشروع فلاتر والدخول إليه
+          cd $(dirname $(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1))
+          
+          echo "تم العثور على مشروع فلاتر في المسار التالي:"
+          pwd
+          
+          # تشغيل أوامر فلاتر بالترتيب داخل المجلد الصحيح
+          flutter pub get
+          flutter build apk --release
+          
+          # نقل ملف الـ APK الناتج إلى المجلد الرئيسي الخارجي لسهولة رفعه
+          mkdir -p $GITHUB_WORKSPACE/output
+          cp build/app/outputs/flutter-apk/app-release.apk $GITHUB_WORKSPACE/output/
 
-      # 5. أمر بناء ملف الـ APK من داخل مجلد المشروع الفرعي
-      - name: Build APK
-        run: flutter build apk --release
-        working-directory: magic_lantern
-
-      # 6. رفع ملف الـ APK الناتج لكي تتمكن من تحميله
+      # 5. رفع ملف الـ APK النهائي للتحميل
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: magic_lantern/build/app/outputs/flutter-apk/app-release.apk
+          path: output/app-release.apk
           
