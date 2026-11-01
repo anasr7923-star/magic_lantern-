@@ -3,14 +3,14 @@ name: Flutter Build APK
 on:
   push:
     branches:
-      - main # أو رئيسي حسب اسم الفرع لديك
+      - main # تأكد أن هذا هو اسم الفرع الافتراضي لديك (main أو master)
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. جلب الكود الخاص بالمشروع
+      # 1. جلب الكود من المستودع
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -27,20 +27,27 @@ jobs:
         with:
           channel: 'stable'
 
-      # 4. جلب المكتبات والبناء التلقائي من داخل مجلد فلاتر أينما كان موقعه
+      # 4. الانتقال المباشر للمجلد الصحيح وتشغيل الأوامر
       - name: Install dependencies & Build APK
         run: |
-          # البحث التلقائي عن المجلد الذي يحتوي على ملف مشروع فلاتر والدخول إليه
-          cd $(dirname $(find . -name "pubspec.yaml" -not -path "*/.*" | head -n 1))
+          # الانتقال إلى مجلد magic_lantern بغض النظر عن اسم المجلد الأب الخارجي
+          cd **/magic_lantern
           
-          echo "تم العثور على مشروع فلاتر في المسار التالي:"
+          echo "المسار الحالي للبناء هو:"
           pwd
           
-          # تشغيل أوامر فلاتر بالترتيب داخل المجلد الصحيح
+          # التأكد من وجود ملف main.dart قبل البدء
+          if [ ! -f "lib/main.dart" ]; then
+            echo "خطأ خطير: لم يتم العثور على lib/main.dart في هذا المجلد!"
+            ls -R lib/
+            exit 1
+          fi
+          
+          # تشغيل أوامر فلاتر
           flutter pub get
           flutter build apk --release
           
-          # نقل ملف الـ APK الناتج إلى المجلد الرئيسي الخارجي لسهولة رفعه
+          # تجميع ملف الـ APK ونقله للخارج لرفعه
           mkdir -p $GITHUB_WORKSPACE/output
           cp build/app/outputs/flutter-apk/app-release.apk $GITHUB_WORKSPACE/output/
 
@@ -50,4 +57,3 @@ jobs:
         with:
           name: release-apk
           path: output/app-release.apk
-          
