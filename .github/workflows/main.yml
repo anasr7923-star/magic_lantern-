@@ -1,25 +1,43 @@
 name: Flutter Build APK
-on: [push, pull_request]
+
+on:
+  push:
+    branches:
+      - main # أو اسم الفرع الخاص بك مثل master أو ريسي
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: subosito/flutter-action@v2
+      # 1. جلب الكود الخاص بالمشروع من المستودع
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. إعداد بيئة جافا (مهمة جداً لبناء أندرويد)
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # 3. إعداد بيئة فلاتر وتحديد الإصدار
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          
-      # الدخول التلقائي للمجلد وتشغيل جلب مكتبات قاعدة البيانات والمحافظ
-      - run: flutter pub get
-        working-directory: magic_lantern
-        
-      # بناء ملف الـ APK النهائي الصافي 100% بدون تعليق لجهازك أو اللابتوب
-      - run: flutter build apk --release
-        working-directory: magic_lantern
-        
-      # استخراج ورفع ملف الـ APK بأحدث إصدار حماية للسيرفر v4
-      - uses: actions/upload-artifact@v4
+
+      # 4. جلب المكتبات والاعتمادات الخاصة بمشروعك
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 5. أمر بناء ملف الـ APK بصيغة الـ Release
+      - name: Build APK
+        run: flutter build apk --release
+
+      # 6. رفع ملف الـ APK الناتج لكي تتمكن من تحميله
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: magic_lantern/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
